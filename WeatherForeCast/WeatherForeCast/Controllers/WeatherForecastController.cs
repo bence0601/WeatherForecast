@@ -20,17 +20,24 @@ namespace WeatherForeCast.Controllers
         }
         [HttpGet]
         [Route("GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get([Required] DateTime date, [Required] string city)
+        public ActionResult<IEnumerable<WeatherForecast>> Get([Required] DateTime date, [Required] string city)
         {
-            _logger.LogInformation("Received a request for weather forecast");
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            if (date.Year > 2023)
             {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                return NotFound("Invalid date. Please provide a date before 2023.");
+            }
+            _logger.LogInformation("Received a request for weather forecast");
+
+            var forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            {
+                Date = date.AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)],
                 City = city
             })
-            .ToArray();
+                .ToArray();
+
+            return Ok();
         }
     }
 }
