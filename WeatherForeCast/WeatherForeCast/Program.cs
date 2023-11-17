@@ -1,6 +1,10 @@
+using WeatherForeCast.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddSingleton<IWeatherDataProvider, OpenWeatherMapApi>();
+
 
 builder.Services.AddControllers(
     options => options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true);

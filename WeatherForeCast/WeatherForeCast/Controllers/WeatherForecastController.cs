@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Net;
 using System.Text.Json;
+using WeatherForeCast.Services;
 
 namespace WeatherForeCast.Controllers
 {
@@ -16,10 +16,12 @@ namespace WeatherForeCast.Controllers
     };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly IWeatherDataProvider _weatherDataProvider;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherDataProvider weatherDataProvider)
         {
             _logger = logger;
+            _weatherDataProvider = weatherDataProvider;
         }
         [HttpGet]
         [Route("GetWeatherForecast")]
@@ -45,20 +47,23 @@ namespace WeatherForeCast.Controllers
 
 
         [HttpGet("GetCurrent")]
-        public WeatherForecast Getcurrent()
+        public ActionResult<WeatherForecast> Getcurrent()
         {
             var apiKey = "410b77bb7ea5e4483af51a593d71c09d";
 
             var lat = 47.497913;
             var lon = 19.040236;
             var url = $"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={apiKey}&units=metric";
-
-            var client = new WebClient();
-
-            _logger.LogInformation("Calling OpenWeather API with url : {url}", url);
-            var weatherData = client.DownloadString(url);
-
-            return ProcessJsonResponse(weatherData);
+            try
+            {
+                var weatherData = _weatherDataProvider.GetCurrentWeather(lat, lon);
+                return ProcessJsonResponse(weatherData);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error getting weather data");
+                return NotFound("Error getting weather data");
+            }
         }
         private static WeatherForecast ProcessJsonResponse(string weatherData)
         {
