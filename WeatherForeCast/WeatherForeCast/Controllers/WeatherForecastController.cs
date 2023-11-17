@@ -18,8 +18,8 @@ namespace WeatherForeCast.Controllers
         {
             _logger = logger;
         }
-
-        [HttpGet("Get")]
+        [HttpGet]
+        [Route("GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get([Required] DateTime date, [Required] string city)
         {
             _logger.LogInformation("Received a request for weather forecast");
