@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
 using WeatherForeCast.Services;
 
 namespace WeatherForeCast.Controllers
@@ -17,11 +16,13 @@ namespace WeatherForeCast.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
         private readonly IWeatherDataProvider _weatherDataProvider;
+        private readonly IJsonProcessor _jsonProcessor;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherDataProvider weatherDataProvider)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherDataProvider weatherDataProvider, IJsonProcessor jsonProcessor)
         {
             _logger = logger;
             _weatherDataProvider = weatherDataProvider;
+            _jsonProcessor = jsonProcessor;
         }
         [HttpGet]
         [Route("GetWeatherForecast")]
@@ -45,19 +46,16 @@ namespace WeatherForeCast.Controllers
             return Ok();
         }
 
-
         [HttpGet("GetCurrent")]
-        public ActionResult<WeatherForecast> Getcurrent()
+        public ActionResult<WeatherForecast> GetCurrent()
         {
-            var apiKey = "410b77bb7ea5e4483af51a593d71c09d";
-
             var lat = 47.497913;
             var lon = 19.040236;
-            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={apiKey}&units=metric";
+
             try
             {
                 var weatherData = _weatherDataProvider.GetCurrentWeather(lat, lon);
-                return ProcessJsonResponse(weatherData);
+                return Ok(_jsonProcessor.Process(weatherData));
             }
             catch (Exception e)
             {
@@ -65,27 +63,6 @@ namespace WeatherForeCast.Controllers
                 return NotFound("Error getting weather data");
             }
         }
-        private static WeatherForecast ProcessJsonResponse(string weatherData)
-        {
-            JsonDocument json = JsonDocument.Parse(weatherData);
-            JsonElement main = json.RootElement.GetProperty("main");
-            JsonElement weather = json.RootElement.GetProperty("weather")[0];
 
-            WeatherForecast forecast = new WeatherForecast
-            {
-                Date = GetDateTimeFromUnixTimeStamp(json.RootElement.GetProperty("dt").GetInt64()),
-                TemperatureC = (int)main.GetProperty("temp").GetDouble(),
-                Summary = weather.GetProperty("description").GetString()
-            };
-
-            return forecast;
-        }
-        private static DateTime GetDateTimeFromUnixTimeStamp(long timeStamp)
-        {
-            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(timeStamp);
-            DateTime dateTime = dateTimeOffset.UtcDateTime;
-
-            return dateTime;
-        }
     }
 }

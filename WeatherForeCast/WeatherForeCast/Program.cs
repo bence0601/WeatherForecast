@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSingleton<IWeatherDataProvider, OpenWeatherMapApi>();
+builder.Services.AddSingleton<IJsonProcessor, JsonProcessor>();
 
 
 builder.Services.AddControllers(
